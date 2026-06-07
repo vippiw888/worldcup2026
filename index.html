@@ -157,7 +157,7 @@ input:focus { border-color: #1a1a1a; }
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxdQWYbpeEKKxav4UfxvXMfndUnfkDByq0oXCpNi2y9EBhnD7GNdxN9N1THna_LYi4/exec";
+const API = "https://script.google.com/macros/s/AKfycbzGwRynuYM6VNsdurNPSqyZPyK6fPwSDQBNqOiN6E4X65mEQKRAmGzECmplw7Em_0C0/exec";
 const ADMIN = "admin";
 const ADMIN_PASSWORD = "987654321";
 
@@ -277,10 +277,29 @@ async function loadData() {
   }
 }
 
+function formatThaiDate(datetimeStr) {
+  if (!datetimeStr) return '';
+  try {
+    const d = new Date(datetimeStr);
+    const thai = new Intl.DateTimeFormat('th-TH', {
+      timeZone: 'Asia/Bangkok',
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    }).format(d);
+    return thai;
+  } catch(e) { return datetimeStr; }
+}
+
 function renderMatches() {
   const el = document.getElementById('tab-matches');
   if (!matches.length) { el.innerHTML = '<div class="empty">ยังไม่มีแมตช์ที่เปิดทาย<br>รอ Admin เพิ่มแมตช์ค่ะ</div>'; return; }
-  el.innerHTML = matches.map(m => {
+  
+  // กรองแค่ Group Stage ก่อนค่ะ
+  const groupMatches = matches.filter(m => m.group && m.group.startsWith('Group'));
+  const otherMatches = matches.filter(m => !m.group || !m.group.startsWith('Group'));
+  const displayMatches = groupMatches.length ? groupMatches : otherMatches;
+
+  el.innerHTML = displayMatches.map(m => {
     const p = myPicks[m.id];
     const hasResult = m.result_home !== "" && m.result_home !== null && m.result_home !== undefined;
     const statusBadge = hasResult
@@ -290,9 +309,10 @@ function renderMatches() {
         : `<span class="badge badge-closed">ปิดทาย</span>`;
     const pickInfo = p ? `<div class="match-pick">ทายไว้: ${p.team} (${p.score_home}-${p.score_away})</div>` : '';
     const canPick = m.open && !hasResult;
+    const dateDisplay = m.datetime ? formatThaiDate(m.datetime) : m.date;
     return `<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-        <div class="match-meta">${m.group} • ${m.date}</div>
+        <div class="match-meta">${m.group} • ${dateDisplay}</div>
         ${statusBadge}
       </div>
       <div class="match-teams">${m.home} <span style="color:#aaa;font-weight:400;">vs</span> ${m.away}</div>
