@@ -150,7 +150,7 @@ input:focus { border-color: #1a1a1a; }
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbzGwRynuYM6VNsdurNPSqyZPyK6fPwSDQBNqOiN6E4X65mEQKRAmGzECmplw7Em_0C0/exec";
+const API = "https://script.google.com/macros/s/AKfycbwtDCl54GKKeMET2nFHr3WUgvNiPoRba7MS3b8NG6NLsPD6THXUEC3ee2wkkW6a110Z/exec";
 const ADMIN = "admin";
 const ADMIN_PASSWORD = "987654321";
 
@@ -327,6 +327,11 @@ function renderMatches() {
         ${statusBadge}
       </div>
       <div class="match-teams">${m.home} <span style="color:#aaa;font-weight:400;">vs</span> ${m.away}</div>
+      ${m.odds ? `<div style="display:flex;gap:4px;margin-top:6px;margin-bottom:2px;">
+        <span style="flex:1;font-size:11px;color:#1565c0;background:#e3f2fd;border-radius:4px;padding:2px 6px;text-align:center;">${m.home.split(' ').pop()} x${m.odds.home.toFixed(1)}</span>
+        <span style="font-size:11px;color:#666;background:#f5f5f5;border-radius:4px;padding:2px 6px;text-align:center;">เสมอ x${m.odds.draw.toFixed(1)}</span>
+        <span style="flex:1;font-size:11px;color:#1565c0;background:#e3f2fd;border-radius:4px;padding:2px 6px;text-align:center;">${m.away.split(' ').pop()} x${m.odds.away.toFixed(1)}</span>
+      </div>` : ''}
       ${pickInfo}
       ${canPick ? `<button class="btn sm" style="margin-top:10px;" onclick="openPredict('${m.id}')">🎯 ${p ? 'แก้ไขการทาย' : 'ทายผล'}</button>` : ''}
     </div>`;
@@ -338,16 +343,23 @@ function openPredict(matchId) {
   curMatchId = matchId;
   selTeam = null;
   const p = myPicks[matchId];
+  const odds = m.odds || { home: 1.5, away: 2.0, draw: 2.5 };
   document.getElementById('predict-title').textContent = m.home + ' vs ' + m.away;
   document.getElementById('predict-content').innerHTML = `
     <div class="card">
       <div class="label" style="margin-bottom:10px;font-size:13px;">เลือกทีมที่คิดว่าจะชนะ</div>
-      <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
         <button class="team-btn ${p&&p.team===m.home?'selected':''}" id="btn-home" onclick="selectTeam('${m.home}')">${m.home}</button>
         <button class="team-btn draw ${p&&p.team==='เสมอ'?'selected':''}" id="btn-draw" onclick="selectTeam('เสมอ')">เสมอ</button>
         <button class="team-btn ${p&&p.team===m.away?'selected':''}" id="btn-away" onclick="selectTeam('${m.away}')">${m.away}</button>
       </div>
-      <div class="label" style="margin-bottom:10px;font-size:13px;">ทายสกอร์ (ถูกได้โบนัส +2 คะแนน)</div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <div style="flex:1;text-align:center;font-size:12px;color:#1565c0;font-weight:600;">x${odds.home.toFixed(1)}</div>
+        <div style="flex:0.5;text-align:center;font-size:12px;color:#1565c0;font-weight:600;">x${odds.draw.toFixed(1)}</div>
+        <div style="flex:1;text-align:center;font-size:12px;color:#1565c0;font-weight:600;">x${odds.away.toFixed(1)}</div>
+      </div>
+      <div style="font-size:11px;color:#aaa;text-align:center;margin-bottom:16px;">คะแนน = 3 × odds | ทายสกอร์ถูก = +2 × odds</div>
+      <div class="label" style="margin-bottom:10px;font-size:13px;">ทายสกอร์ (โบนัส +2 × odds)</div>
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
         <div style="text-align:center;">
           <div style="font-size:11px;color:#888;margin-bottom:6px;">${m.home}</div>
@@ -453,110 +465,117 @@ async function importAllMatches() {
   status.style.display = ''; status.style.color = '#888';
   status.textContent = 'กำลังเพิ่มแมตช์...';
   const allMatches = [
-    {home:'🇲🇽 เม็กซิโก',away:'🇿🇦 แอฟริกาใต้',date:'11 มิ.ย. 04:00',group:'Group A',datetime:'2026-06-11T04:00'},
-    {home:'🇰🇷 เกาหลีใต้',away:'TBD',date:'12 มิ.ย. 11:00',group:'Group A',datetime:'2026-06-12T11:00'},
-    {home:'🇨🇦 แคนาดา',away:'TBD',date:'12 มิ.ย. 03:00',group:'Group B',datetime:'2026-06-12T03:00'},
-    {home:'🇺🇸 สหรัฐอเมริกา',away:'🇵🇾 ปารากวัย',date:'13 มิ.ย. 08:00',group:'Group D',datetime:'2026-06-13T08:00'},
-    {home:'🇶🇦 กาตาร์',away:'🇨🇭 สวิตเซอร์แลนด์',date:'13 มิ.ย. 22:00',group:'Group B',datetime:'2026-06-13T22:00'},
-    {home:'🇧🇷 บราซิล',away:'🇲🇦 โมร็อกโก',date:'14 มิ.ย. 01:00',group:'Group C',datetime:'2026-06-14T01:00'},
-    {home:'🇭🇹 เฮติ',away:'🏴󠁧󠁢󠁳󠁣󠁴󠁿 สก็อตแลนด์',date:'14 มิ.ย. 04:00',group:'Group C',datetime:'2026-06-14T04:00'},
-    {home:'🇦🇺 ออสเตรเลีย',away:'TBD',date:'14 มิ.ย. 07:00',group:'Group D',datetime:'2026-06-14T07:00'},
-    {home:'🇩🇪 เยอรมนี',away:'🇨🇼 กูราเซา',date:'14 มิ.ย. 20:00',group:'Group E',datetime:'2026-06-14T20:00'},
-    {home:'🇳🇱 เนเธอร์แลนด์',away:'🇯🇵 ญี่ปุ่น',date:'14 มิ.ย. 23:00',group:'Group F',datetime:'2026-06-14T23:00'},
-    {home:'🇨🇮 ไอวอรีโคสต์',away:'🇪🇨 เอกวาดอร์',date:'15 มิ.ย. 02:00',group:'Group E',datetime:'2026-06-15T02:00'},
-    {home:'TBD',away:'🇹🇳 ตูนิเซีย',date:'15 มิ.ย. 05:00',group:'Group F',datetime:'2026-06-15T05:00'},
-    {home:'🇪🇸 สเปน',away:'🇨🇻 กาบูเวร์ดี',date:'15 มิ.ย. 19:00',group:'Group H',datetime:'2026-06-15T19:00'},
-    {home:'🇧🇪 เบลเยียม',away:'🇪🇬 อียิปต์',date:'15 มิ.ย. 22:00',group:'Group G',datetime:'2026-06-15T22:00'},
-    {home:'🇸🇦 ซาอุดีอาระเบีย',away:'🇺🇾 อุรุกวัย',date:'16 มิ.ย. 01:00',group:'Group H',datetime:'2026-06-16T01:00'},
-    {home:'🇮🇷 อิหร่าน',away:'🇳🇿 นิวซีแลนด์',date:'16 มิ.ย. 04:00',group:'Group G',datetime:'2026-06-16T04:00'},
-    {home:'🇫🇷 ฝรั่งเศส',away:'🇸🇳 เซเนกัล',date:'16 มิ.ย. 22:00',group:'Group I',datetime:'2026-06-16T22:00'},
-    {home:'TBD',away:'🇳🇴 นอร์เวย์',date:'17 มิ.ย. 01:00',group:'Group I',datetime:'2026-06-17T01:00'},
-    {home:'🇦🇷 อาร์เจนตินา',away:'🇩🇿 แอลจีเรีย',date:'17 มิ.ย. 04:00',group:'Group J',datetime:'2026-06-17T04:00'},
-    {home:'🇦🇹 ออสเตรีย',away:'🇯🇴 จอร์แดน',date:'17 มิ.ย. 07:00',group:'Group J',datetime:'2026-06-17T07:00'},
-    {home:'🇵🇹 โปรตุเกส',away:'TBD',date:'17 มิ.ย. 20:00',group:'Group K',datetime:'2026-06-17T20:00'},
-    {home:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 อังกฤษ',away:'🇭🇷 โครเอเชีย',date:'17 มิ.ย. 23:00',group:'Group L',datetime:'2026-06-17T23:00'},
-    {home:'🇬🇭 กานา',away:'🇵🇦 ปานามา',date:'18 มิ.ย. 02:00',group:'Group L',datetime:'2026-06-18T02:00'},
-    {home:'🇺🇿 อุซเบกิสถาน',away:'🇨🇴 โคลอมเบีย',date:'18 มิ.ย. 05:00',group:'Group K',datetime:'2026-06-18T05:00'},
-    {home:'TBD',away:'🇿🇦 แอฟริกาใต้',date:'18 มิ.ย. 19:00',group:'Group A',datetime:'2026-06-18T19:00'},
-    {home:'🇨🇭 สวิตเซอร์แลนด์',away:'TBD',date:'18 มิ.ย. 22:00',group:'Group B',datetime:'2026-06-18T22:00'},
-    {home:'🇨🇦 แคนาดา',away:'🇶🇦 กาตาร์',date:'19 มิ.ย. 01:00',group:'Group B',datetime:'2026-06-19T01:00'},
-    {home:'🇲🇽 เม็กซิโก',away:'🇰🇷 เกาหลีใต้',date:'19 มิ.ย. 04:00',group:'Group A',datetime:'2026-06-19T04:00'},
-    {home:'🇺🇸 สหรัฐอเมริกา',away:'🇦🇺 ออสเตรเลีย',date:'19 มิ.ย. 22:00',group:'Group D',datetime:'2026-06-19T22:00'},
-    {home:'🏴󠁧󠁢󠁳󠁣󠁴󠁿 สก็อตแลนด์',away:'🇲🇦 โมร็อกโก',date:'20 มิ.ย. 01:00',group:'Group C',datetime:'2026-06-20T01:00'},
-    {home:'🇧🇷 บราซิล',away:'🇭🇹 เฮติ',date:'20 มิ.ย. 04:00',group:'Group C',datetime:'2026-06-20T04:00'},
-    {home:'TBD',away:'🇵🇾 ปารากวัย',date:'20 มิ.ย. 07:00',group:'Group D',datetime:'2026-06-20T07:00'},
-    {home:'🇳🇱 เนเธอร์แลนด์',away:'TBD',date:'20 มิ.ย. 20:00',group:'Group F',datetime:'2026-06-20T20:00'},
-    {home:'🇩🇪 เยอรมนี',away:'🇨🇮 ไอวอรีโคสต์',date:'20 มิ.ย. 23:00',group:'Group E',datetime:'2026-06-20T23:00'},
-    {home:'🇪🇨 เอกวาดอร์',away:'🇨🇼 กูราเซา',date:'21 มิ.ย. 03:00',group:'Group E',datetime:'2026-06-21T03:00'},
-    {home:'🇹🇳 ตูนิเซีย',away:'🇯🇵 ญี่ปุ่น',date:'21 มิ.ย. 07:00',group:'Group F',datetime:'2026-06-21T07:00'},
-    {home:'🇪🇸 สเปน',away:'🇸🇦 ซาอุดีอาระเบีย',date:'21 มิ.ย. 19:00',group:'Group H',datetime:'2026-06-21T19:00'},
-    {home:'🇧🇪 เบลเยียม',away:'🇮🇷 อิหร่าน',date:'21 มิ.ย. 22:00',group:'Group G',datetime:'2026-06-21T22:00'},
-    {home:'🇺🇾 อุรุกวัย',away:'🇨🇻 กาบูเวร์ดี',date:'22 มิ.ย. 01:00',group:'Group H',datetime:'2026-06-22T01:00'},
-    {home:'🇳🇿 นิวซีแลนด์',away:'🇪🇬 อียิปต์',date:'22 มิ.ย. 04:00',group:'Group G',datetime:'2026-06-22T04:00'},
-    {home:'🇦🇷 อาร์เจนตินา',away:'🇦🇹 ออสเตรีย',date:'22 มิ.ย. 20:00',group:'Group J',datetime:'2026-06-22T20:00'},
-    {home:'🇫🇷 ฝรั่งเศส',away:'TBD',date:'23 มิ.ย. 00:00',group:'Group I',datetime:'2026-06-23T00:00'},
-    {home:'🇳🇴 นอร์เวย์',away:'🇸🇳 เซเนกัล',date:'23 มิ.ย. 03:00',group:'Group I',datetime:'2026-06-23T03:00'},
-    {home:'🇯🇴 จอร์แดน',away:'🇩🇿 แอลจีเรีย',date:'23 มิ.ย. 06:00',group:'Group J',datetime:'2026-06-23T06:00'},
-    {home:'🇵🇹 โปรตุเกส',away:'🇺🇿 อุซเบกิสถาน',date:'23 มิ.ย. 20:00',group:'Group K',datetime:'2026-06-23T20:00'},
-    {home:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 อังกฤษ',away:'🇬🇭 กานา',date:'23 มิ.ย. 23:00',group:'Group L',datetime:'2026-06-23T23:00'},
-    {home:'🇵🇦 ปานามา',away:'🇭🇷 โครเอเชีย',date:'24 มิ.ย. 02:00',group:'Group L',datetime:'2026-06-24T02:00'},
-    {home:'🇨🇴 โคลอมเบีย',away:'TBD',date:'24 มิ.ย. 05:00',group:'Group K',datetime:'2026-06-24T05:00'},
-    {home:'🇨🇭 สวิตเซอร์แลนด์',away:'🇨🇦 แคนาดา',date:'24 มิ.ย. 22:00',group:'Group B',datetime:'2026-06-24T22:00'},
-    {home:'TBD',away:'🇶🇦 กาตาร์',date:'24 มิ.ย. 22:00',group:'Group B',datetime:'2026-06-24T22:00'},
-    {home:'🏴󠁧󠁢󠁳󠁣󠁴󠁿 สก็อตแลนด์',away:'🇧🇷 บราซิล',date:'25 มิ.ย. 01:00',group:'Group C',datetime:'2026-06-25T01:00'},
-    {home:'🇲🇦 โมร็อกโก',away:'🇭🇹 เฮติ',date:'25 มิ.ย. 01:00',group:'Group C',datetime:'2026-06-25T01:00'},
-    {home:'TBD',away:'🇲🇽 เม็กซิโก',date:'25 มิ.ย. 04:00',group:'Group A',datetime:'2026-06-25T04:00'},
-    {home:'🇿🇦 แอฟริกาใต้',away:'🇰🇷 เกาหลีใต้',date:'25 มิ.ย. 04:00',group:'Group A',datetime:'2026-06-25T04:00'},
-    {home:'🇪🇨 เอกวาดอร์',away:'🇩🇪 เยอรมนี',date:'25 มิ.ย. 23:00',group:'Group E',datetime:'2026-06-25T23:00'},
-    {home:'🇨🇼 กูราเซา',away:'🇨🇮 ไอวอรีโคสต์',date:'25 มิ.ย. 23:00',group:'Group E',datetime:'2026-06-25T23:00'},
-    {home:'🇯🇵 ญี่ปุ่น',away:'TBD',date:'26 มิ.ย. 02:00',group:'Group F',datetime:'2026-06-26T02:00'},
-    {home:'🇹🇳 ตูนิเซีย',away:'🇳🇱 เนเธอร์แลนด์',date:'26 มิ.ย. 02:00',group:'Group F',datetime:'2026-06-26T02:00'},
-    {home:'TBD',away:'🇺🇸 สหรัฐอเมริกา',date:'26 มิ.ย. 05:00',group:'Group D',datetime:'2026-06-26T05:00'},
-    {home:'🇵🇾 ปารากวัย',away:'🇦🇺 ออสเตรเลีย',date:'26 มิ.ย. 05:00',group:'Group D',datetime:'2026-06-26T05:00'},
-    {home:'🇳🇴 นอร์เวย์',away:'🇫🇷 ฝรั่งเศส',date:'26 มิ.ย. 22:00',group:'Group I',datetime:'2026-06-26T22:00'},
-    {home:'🇸🇳 เซเนกัล',away:'TBD',date:'26 มิ.ย. 22:00',group:'Group I',datetime:'2026-06-26T22:00'},
-    {home:'🇨🇻 กาบูเวร์ดี',away:'🇸🇦 ซาอุดีอาระเบีย',date:'27 มิ.ย. 03:00',group:'Group H',datetime:'2026-06-27T03:00'},
-    {home:'🇺🇾 อุรุกวัย',away:'🇪🇸 สเปน',date:'27 มิ.ย. 03:00',group:'Group H',datetime:'2026-06-27T03:00'},
-    {home:'🇪🇬 อียิปต์',away:'🇮🇷 อิหร่าน',date:'27 มิ.ย. 06:00',group:'Group G',datetime:'2026-06-27T06:00'},
-    {home:'🇳🇿 นิวซีแลนด์',away:'🇧🇪 เบลเยียม',date:'27 มิ.ย. 06:00',group:'Group G',datetime:'2026-06-27T06:00'},
-    {home:'🇵🇦 ปานามา',away:'🏴󠁧󠁢󠁥󠁮󠁧󠁿 อังกฤษ',date:'28 มิ.ย. 00:00',group:'Group L',datetime:'2026-06-28T00:00'},
-    {home:'🇭🇷 โครเอเชีย',away:'🇬🇭 กานา',date:'28 มิ.ย. 00:00',group:'Group L',datetime:'2026-06-28T00:00'},
-    {home:'🇨🇴 โคลอมเบีย',away:'🇵🇹 โปรตุเกส',date:'28 มิ.ย. 02:30',group:'Group K',datetime:'2026-06-28T02:30'},
-    {home:'TBD',away:'🇺🇿 อุซเบกิสถาน',date:'28 มิ.ย. 02:30',group:'Group K',datetime:'2026-06-28T02:30'},
-    {home:'🇩🇿 แอลจีเรีย',away:'🇦🇹 ออสเตรีย',date:'28 มิ.ย. 05:00',group:'Group J',datetime:'2026-06-28T05:00'},
-    {home:'🇯🇴 จอร์แดน',away:'🇦🇷 อาร์เจนตินา',date:'28 มิ.ย. 05:00',group:'Group J',datetime:'2026-06-28T05:00'},
-    {home:'Round of 32',away:'Match 1',date:'29 มิ.ย.',group:'Round of 32',datetime:'2026-06-29T02:00'},
-    {home:'Round of 32',away:'Match 2',date:'29 มิ.ย.',group:'Round of 32',datetime:'2026-06-29T20:00'},
-    {home:'Round of 32',away:'Match 3',date:'29 มิ.ย.',group:'Round of 32',datetime:'2026-06-29T23:30'},
-    {home:'Round of 32',away:'Match 4',date:'29 มิ.ย.',group:'Round of 32',datetime:'2026-06-30T04:00'},
-    {home:'Round of 32',away:'Match 5',date:'30 มิ.ย.',group:'Round of 32',datetime:'2026-06-30T20:00'},
-    {home:'Round of 32',away:'Match 6',date:'30 มิ.ย.',group:'Round of 32',datetime:'2026-07-01T00:00'},
-    {home:'Round of 32',away:'Match 7',date:'30 มิ.ย.',group:'Round of 32',datetime:'2026-07-01T04:00'},
-    {home:'Round of 32',away:'Match 8',date:'1 ก.ค.',group:'Round of 32',datetime:'2026-07-01T19:00'},
-    {home:'Round of 32',away:'Match 9',date:'1 ก.ค.',group:'Round of 32',datetime:'2026-07-01T23:00'},
-    {home:'Round of 32',away:'Match 10',date:'1 ก.ค.',group:'Round of 32',datetime:'2026-07-02T03:00'},
-    {home:'Round of 32',away:'Match 11',date:'2 ก.ค.',group:'Round of 32',datetime:'2026-07-02T20:00'},
-    {home:'Round of 32',away:'Match 12',date:'2 ก.ค.',group:'Round of 32',datetime:'2026-07-03T00:00'},
-    {home:'Round of 32',away:'Match 13',date:'2 ก.ค.',group:'Round of 32',datetime:'2026-07-03T04:00'},
-    {home:'Round of 32',away:'Match 14',date:'3 ก.ค.',group:'Round of 32',datetime:'2026-07-03T21:00'},
-    {home:'Round of 32',away:'Match 15',date:'3 ก.ค.',group:'Round of 32',datetime:'2026-07-04T01:00'},
-    {home:'Round of 32',away:'Match 16',date:'3 ก.ค.',group:'Round of 32',datetime:'2026-07-04T04:30'},
-    {home:'Round of 16',away:'Match 1',date:'4 ก.ค.',group:'Round of 16',datetime:'2026-07-05T00:00'},
-    {home:'Round of 16',away:'Match 2',date:'4 ก.ค.',group:'Round of 16',datetime:'2026-07-05T04:00'},
-    {home:'Round of 16',away:'Match 3',date:'5 ก.ค.',group:'Round of 16',datetime:'2026-07-05T23:00'},
-    {home:'Round of 16',away:'Match 4',date:'5 ก.ค.',group:'Round of 16',datetime:'2026-07-06T03:00'},
-    {home:'Round of 16',away:'Match 5',date:'6 ก.ค.',group:'Round of 16',datetime:'2026-07-07T00:00'},
-    {home:'Round of 16',away:'Match 6',date:'6 ก.ค.',group:'Round of 16',datetime:'2026-07-07T03:00'},
-    {home:'Round of 16',away:'Match 7',date:'7 ก.ค.',group:'Round of 16',datetime:'2026-07-07T19:00'},
-    {home:'Round of 16',away:'Match 8',date:'7 ก.ค.',group:'Round of 16',datetime:'2026-07-07T23:00'},
-    {home:'QF',away:'Match 1',date:'9 ก.ค.',group:'Quarterfinal',datetime:'2026-07-09T23:00'},
-    {home:'QF',away:'Match 2',date:'10 ก.ค.',group:'Quarterfinal',datetime:'2026-07-10T22:00'},
-    {home:'QF',away:'Match 3',date:'11 ก.ค.',group:'Quarterfinal',datetime:'2026-07-12T00:00'},
-    {home:'QF',away:'Match 4',date:'11 ก.ค.',group:'Quarterfinal',datetime:'2026-07-12T04:00'},
-    {home:'SF',away:'Match 1',date:'14 ก.ค.',group:'Semifinal',datetime:'2026-07-15T00:00'},
-    {home:'SF',away:'Match 2',date:'15 ก.ค.',group:'Semifinal',datetime:'2026-07-15T23:00'},
-    {home:'อันดับ 3',away:'อันดับ 4',date:'18 ก.ค.',group:'Bronze Medal',datetime:'2026-07-19T00:00'},
-    {home:'แชมป์',away:'รองแชมป์',date:'19 ก.ค. 03:00',group:'Final',datetime:'2026-07-19T22:00'},
+  const allMatches = [
+    // GROUP STAGE (เวลาไทย GMT+7 จาก TrueID)
+    {home:'เม็กซิโก',away:'แอฟริกาใต้',date:'11 มิ.ย. 02:00',group:'Group A',datetime:'2026-06-11T02:00'},
+    {home:'เกาหลีใต้',away:'เช็กเกีย',date:'12 มิ.ย. 09:00',group:'Group A',datetime:'2026-06-12T09:00'},
+    {home:'แคนาดา',away:'บอสเนีย',date:'13 มิ.ย. 02:00',group:'Group B',datetime:'2026-06-13T02:00'},
+    {home:'สหรัฐอเมริกา',away:'ปารากวัย',date:'13 มิ.ย. 08:00',group:'Group D',datetime:'2026-06-13T08:00'},
+    {home:'กาตาร์',away:'สวิตเซอร์แลนด์',date:'14 มิ.ย. 02:00',group:'Group B',datetime:'2026-06-14T02:00'},
+    {home:'บราซิล',away:'โมร็อกโก',date:'14 มิ.ย. 05:00',group:'Group C',datetime:'2026-06-14T05:00'},
+    {home:'เฮติ',away:'สกอตแลนด์',date:'14 มิ.ย. 08:00',group:'Group C',datetime:'2026-06-14T08:00'},
+    {home:'ออสเตรเลีย',away:'ตุรกี',date:'14 มิ.ย. 11:00',group:'Group D',datetime:'2026-06-14T11:00'},
+    {home:'เยอรมนี',away:'กูราเซา',date:'15 มิ.ย. 00:00',group:'Group E',datetime:'2026-06-15T00:00'},
+    {home:'เนเธอร์แลนด์',away:'ญี่ปุ่น',date:'15 มิ.ย. 03:00',group:'Group F',datetime:'2026-06-15T03:00'},
+    {home:'ไอวอรีโคสต์',away:'เอกวาดอร์',date:'15 มิ.ย. 06:00',group:'Group E',datetime:'2026-06-15T06:00'},
+    {home:'สวีเดน',away:'ตูนิเซีย',date:'15 มิ.ย. 09:00',group:'Group F',datetime:'2026-06-15T09:00'},
+    {home:'สเปน',away:'กาบูเวร์ดี',date:'15 มิ.ย. 23:00',group:'Group H',datetime:'2026-06-15T23:00'},
+    {home:'เบลเยียม',away:'อียิปต์',date:'16 มิ.ย. 02:00',group:'Group G',datetime:'2026-06-16T02:00'},
+    {home:'ซาอุดีอาระเบีย',away:'อุรุกวัย',date:'16 มิ.ย. 05:00',group:'Group H',datetime:'2026-06-16T05:00'},
+    {home:'อิหร่าน',away:'นิวซีแลนด์',date:'16 มิ.ย. 08:00',group:'Group G',datetime:'2026-06-16T08:00'},
+    {home:'ฝรั่งเศส',away:'เซเนกัล',date:'17 มิ.ย. 02:00',group:'Group I',datetime:'2026-06-17T02:00'},
+    {home:'อิรัก',away:'นอร์เวย์',date:'17 มิ.ย. 05:00',group:'Group I',datetime:'2026-06-17T05:00'},
+    {home:'อาร์เจนตินา',away:'แอลจีเรีย',date:'17 มิ.ย. 08:00',group:'Group J',datetime:'2026-06-17T08:00'},
+    {home:'ออสเตรีย',away:'จอร์แดน',date:'17 มิ.ย. 11:00',group:'Group J',datetime:'2026-06-17T11:00'},
+    {home:'โปรตุเกส',away:'ดีอาร์ คองโก',date:'18 มิ.ย. 00:00',group:'Group K',datetime:'2026-06-18T00:00'},
+    {home:'อังกฤษ',away:'โครเอเชีย',date:'18 มิ.ย. 03:00',group:'Group L',datetime:'2026-06-18T03:00'},
+    {home:'กานา',away:'ปานามา',date:'18 มิ.ย. 06:00',group:'Group L',datetime:'2026-06-18T06:00'},
+    {home:'อุซเบกิสถาน',away:'โคลอมเบีย',date:'18 มิ.ย. 09:00',group:'Group K',datetime:'2026-06-18T09:00'},
+    {home:'เช็กเกีย',away:'แอฟริกาใต้',date:'18 มิ.ย. 23:00',group:'Group A',datetime:'2026-06-18T23:00'},
+    {home:'สวิตเซอร์แลนด์',away:'บอสเนีย',date:'19 มิ.ย. 02:00',group:'Group B',datetime:'2026-06-19T02:00'},
+    {home:'แคนาดา',away:'กาตาร์',date:'19 มิ.ย. 05:00',group:'Group B',datetime:'2026-06-19T05:00'},
+    {home:'เม็กซิโก',away:'เกาหลีใต้',date:'19 มิ.ย. 08:00',group:'Group A',datetime:'2026-06-19T08:00'},
+    {home:'สหรัฐอเมริกา',away:'ออสเตรเลีย',date:'20 มิ.ย. 02:00',group:'Group D',datetime:'2026-06-20T02:00'},
+    {home:'สกอตแลนด์',away:'โมร็อกโก',date:'20 มิ.ย. 05:00',group:'Group C',datetime:'2026-06-20T05:00'},
+    {home:'บราซิล',away:'เฮติ',date:'20 มิ.ย. 07:30',group:'Group C',datetime:'2026-06-20T07:30'},
+    {home:'ตุรกี',away:'ปารากวัย',date:'20 มิ.ย. 10:00',group:'Group D',datetime:'2026-06-20T10:00'},
+    {home:'เนเธอร์แลนด์',away:'สวีเดน',date:'21 มิ.ย. 00:00',group:'Group F',datetime:'2026-06-21T00:00'},
+    {home:'เยอรมนี',away:'ไอวอรีโคสต์',date:'21 มิ.ย. 03:00',group:'Group E',datetime:'2026-06-21T03:00'},
+    {home:'เอกวาดอร์',away:'กูราเซา',date:'21 มิ.ย. 07:00',group:'Group E',datetime:'2026-06-21T07:00'},
+    {home:'ตูนิเซีย',away:'ญี่ปุ่น',date:'21 มิ.ย. 11:00',group:'Group F',datetime:'2026-06-21T11:00'},
+    {home:'สเปน',away:'ซาอุดีอาระเบีย',date:'21 มิ.ย. 23:00',group:'Group H',datetime:'2026-06-21T23:00'},
+    {home:'เบลเยียม',away:'อิหร่าน',date:'22 มิ.ย. 02:00',group:'Group G',datetime:'2026-06-22T02:00'},
+    {home:'อุรุกวัย',away:'กาบูเวร์ดี',date:'22 มิ.ย. 05:00',group:'Group H',datetime:'2026-06-22T05:00'},
+    {home:'นิวซีแลนด์',away:'อียิปต์',date:'22 มิ.ย. 08:00',group:'Group G',datetime:'2026-06-22T08:00'},
+    {home:'อาร์เจนตินา',away:'ออสเตรีย',date:'23 มิ.ย. 00:00',group:'Group J',datetime:'2026-06-23T00:00'},
+    {home:'ฝรั่งเศส',away:'อิรัก',date:'23 มิ.ย. 04:00',group:'Group I',datetime:'2026-06-23T04:00'},
+    {home:'นอร์เวย์',away:'เซเนกัล',date:'23 มิ.ย. 07:00',group:'Group I',datetime:'2026-06-23T07:00'},
+    {home:'จอร์แดน',away:'แอลจีเรีย',date:'23 มิ.ย. 10:00',group:'Group J',datetime:'2026-06-23T10:00'},
+    {home:'โปรตุเกส',away:'อุซเบกิสถาน',date:'24 มิ.ย. 00:00',group:'Group K',datetime:'2026-06-24T00:00'},
+    {home:'อังกฤษ',away:'กานา',date:'24 มิ.ย. 03:00',group:'Group L',datetime:'2026-06-24T03:00'},
+    {home:'ปานามา',away:'โครเอเชีย',date:'24 มิ.ย. 06:00',group:'Group L',datetime:'2026-06-24T06:00'},
+    {home:'โคลอมเบีย',away:'ดีอาร์ คองโก',date:'24 มิ.ย. 09:00',group:'Group K',datetime:'2026-06-24T09:00'},
+    {home:'สวิตเซอร์แลนด์',away:'แคนาดา',date:'25 มิ.ย. 02:00',group:'Group B',datetime:'2026-06-25T02:00'},
+    {home:'บอสเนีย',away:'กาตาร์',date:'25 มิ.ย. 02:00',group:'Group B',datetime:'2026-06-25T02:00'},
+    {home:'สกอตแลนด์',away:'บราซิล',date:'25 มิ.ย. 05:00',group:'Group C',datetime:'2026-06-25T05:00'},
+    {home:'โมร็อกโก',away:'เฮติ',date:'25 มิ.ย. 05:00',group:'Group C',datetime:'2026-06-25T05:00'},
+    {home:'เช็กเกีย',away:'เม็กซิโก',date:'25 มิ.ย. 08:00',group:'Group A',datetime:'2026-06-25T08:00'},
+    {home:'แอฟริกาใต้',away:'เกาหลีใต้',date:'25 มิ.ย. 08:00',group:'Group A',datetime:'2026-06-25T08:00'},
+    {home:'กูราเซา',away:'ไอวอรีโคสต์',date:'26 มิ.ย. 03:00',group:'Group E',datetime:'2026-06-26T03:00'},
+    {home:'เอกวาดอร์',away:'เยอรมนี',date:'26 มิ.ย. 03:00',group:'Group E',datetime:'2026-06-26T03:00'},
+    {home:'ญี่ปุ่น',away:'สวีเดน',date:'26 มิ.ย. 06:00',group:'Group F',datetime:'2026-06-26T06:00'},
+    {home:'ตูนิเซีย',away:'เนเธอร์แลนด์',date:'26 มิ.ย. 06:00',group:'Group F',datetime:'2026-06-26T06:00'},
+    {home:'ตุรกี',away:'สหรัฐอเมริกา',date:'26 มิ.ย. 09:00',group:'Group D',datetime:'2026-06-26T09:00'},
+    {home:'ปารากวัย',away:'ออสเตรเลีย',date:'26 มิ.ย. 09:00',group:'Group D',datetime:'2026-06-26T09:00'},
+    {home:'นอร์เวย์',away:'ฝรั่งเศส',date:'27 มิ.ย. 02:00',group:'Group I',datetime:'2026-06-27T02:00'},
+    {home:'เซเนกัล',away:'อิรัก',date:'27 มิ.ย. 02:00',group:'Group I',datetime:'2026-06-27T02:00'},
+    {home:'กาบูเวร์ดี',away:'ซาอุดีอาระเบีย',date:'27 มิ.ย. 07:00',group:'Group H',datetime:'2026-06-27T07:00'},
+    {home:'อุรุกวัย',away:'สเปน',date:'27 มิ.ย. 07:00',group:'Group H',datetime:'2026-06-27T07:00'},
+    {home:'อียิปต์',away:'อิหร่าน',date:'27 มิ.ย. 10:00',group:'Group G',datetime:'2026-06-27T10:00'},
+    {home:'นิวซีแลนด์',away:'เบลเยียม',date:'27 มิ.ย. 10:00',group:'Group G',datetime:'2026-06-27T10:00'},
+    {home:'ปานามา',away:'อังกฤษ',date:'28 มิ.ย. 04:00',group:'Group L',datetime:'2026-06-28T04:00'},
+    {home:'โครเอเชีย',away:'กานา',date:'28 มิ.ย. 04:00',group:'Group L',datetime:'2026-06-28T04:00'},
+    {home:'โคลอมเบีย',away:'โปรตุเกส',date:'28 มิ.ย. 06:30',group:'Group K',datetime:'2026-06-28T06:30'},
+    {home:'ดีอาร์ คองโก',away:'อุซเบกิสถาน',date:'28 มิ.ย. 06:30',group:'Group K',datetime:'2026-06-28T06:30'},
+    {home:'แอลจีเรีย',away:'ออสเตรีย',date:'28 มิ.ย. 09:00',group:'Group J',datetime:'2026-06-28T09:00'},
+    {home:'จอร์แดน',away:'อาร์เจนตินา',date:'28 มิ.ย. 09:00',group:'Group J',datetime:'2026-06-28T09:00'},
+    // ROUND OF 32
+    {home:'TBD',away:'TBD',date:'29 มิ.ย.',group:'Round of 32',datetime:'2026-06-29T00:00'},
+    {home:'TBD',away:'TBD',date:'29 มิ.ย.',group:'Round of 32',datetime:'2026-06-29T03:00'},
+    {home:'TBD',away:'TBD',date:'29 มิ.ย.',group:'Round of 32',datetime:'2026-06-29T06:00'},
+    {home:'TBD',away:'TBD',date:'30 มิ.ย.',group:'Round of 32',datetime:'2026-06-30T00:00'},
+    {home:'TBD',away:'TBD',date:'30 มิ.ย.',group:'Round of 32',datetime:'2026-06-30T03:00'},
+    {home:'TBD',away:'TBD',date:'30 มิ.ย.',group:'Round of 32',datetime:'2026-06-30T06:00'},
+    {home:'TBD',away:'TBD',date:'1 ก.ค.',group:'Round of 32',datetime:'2026-07-01T00:00'},
+    {home:'TBD',away:'TBD',date:'1 ก.ค.',group:'Round of 32',datetime:'2026-07-01T03:00'},
+    {home:'TBD',away:'TBD',date:'1 ก.ค.',group:'Round of 32',datetime:'2026-07-01T06:00'},
+    {home:'TBD',away:'TBD',date:'2 ก.ค.',group:'Round of 32',datetime:'2026-07-02T00:00'},
+    {home:'TBD',away:'TBD',date:'2 ก.ค.',group:'Round of 32',datetime:'2026-07-02T03:00'},
+    {home:'TBD',away:'TBD',date:'2 ก.ค.',group:'Round of 32',datetime:'2026-07-02T06:00'},
+    {home:'TBD',away:'TBD',date:'3 ก.ค.',group:'Round of 32',datetime:'2026-07-03T00:00'},
+    {home:'TBD',away:'TBD',date:'3 ก.ค.',group:'Round of 32',datetime:'2026-07-03T03:00'},
+    {home:'TBD',away:'TBD',date:'3 ก.ค.',group:'Round of 32',datetime:'2026-07-03T06:00'},
+    {home:'TBD',away:'TBD',date:'4 ก.ค.',group:'Round of 32',datetime:'2026-07-04T00:00'},
+    // ROUND OF 16
+    {home:'TBD',away:'TBD',date:'5 ก.ค.',group:'Round of 16',datetime:'2026-07-05T00:00'},
+    {home:'TBD',away:'TBD',date:'5 ก.ค.',group:'Round of 16',datetime:'2026-07-05T06:00'},
+    {home:'TBD',away:'TBD',date:'6 ก.ค.',group:'Round of 16',datetime:'2026-07-06T00:00'},
+    {home:'TBD',away:'TBD',date:'6 ก.ค.',group:'Round of 16',datetime:'2026-07-06T06:00'},
+    {home:'TBD',away:'TBD',date:'7 ก.ค.',group:'Round of 16',datetime:'2026-07-07T00:00'},
+    {home:'TBD',away:'TBD',date:'7 ก.ค.',group:'Round of 16',datetime:'2026-07-07T06:00'},
+    {home:'TBD',away:'TBD',date:'8 ก.ค.',group:'Round of 16',datetime:'2026-07-08T00:00'},
+    {home:'TBD',away:'TBD',date:'8 ก.ค.',group:'Round of 16',datetime:'2026-07-08T06:00'},
+    // QUARTERFINALS
+    {home:'TBD',away:'TBD',date:'10 ก.ค.',group:'Quarterfinal',datetime:'2026-07-10T00:00'},
+    {home:'TBD',away:'TBD',date:'10 ก.ค.',group:'Quarterfinal',datetime:'2026-07-10T06:00'},
+    {home:'TBD',away:'TBD',date:'11 ก.ค.',group:'Quarterfinal',datetime:'2026-07-11T00:00'},
+    {home:'TBD',away:'TBD',date:'12 ก.ค.',group:'Quarterfinal',datetime:'2026-07-12T00:00'},
+    // SEMIFINALS
+    {home:'TBD',away:'TBD',date:'15 ก.ค.',group:'Semifinal',datetime:'2026-07-15T00:00'},
+    {home:'TBD',away:'TBD',date:'16 ก.ค.',group:'Semifinal',datetime:'2026-07-16T00:00'},
+    // BRONZE + FINAL
+    {home:'TBD',away:'TBD',date:'19 ก.ค.',group:'Bronze Medal',datetime:'2026-07-19T00:00'},
+    {home:'TBD',away:'TBD',date:'19 ก.ค. 02:00',group:'Final',datetime:'2026-07-19T02:00'},
   ];
   let success = 0;
   for (let i = 0; i < allMatches.length; i++) {
