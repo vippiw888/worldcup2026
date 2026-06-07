@@ -625,6 +625,26 @@ async function adminResult(id, home, away) {
   renderAdminList();
 }
 
+async function adminEditDatetime(id, currentDatetime) {
+  // แปลง ISO string เป็น datetime-local format
+  let current = '';
+  if (currentDatetime) {
+    const d = new Date(currentDatetime);
+    const offset = d.getTime() - (d.getTimezoneOffset() * 60000);
+    current = new Date(offset).toISOString().slice(0, 16);
+  }
+  const newDatetime = prompt('วันเวลาแข่งขัน (เวลาไทย):\nรูปแบบ: YYYY-MM-DDTHH:MM\nเช่น 2026-06-11T02:00', current);
+  if (newDatetime === null || newDatetime.trim() === '') return;
+  try {
+    await apiPost({ action: 'updateMatch', id, datetime: newDatetime.trim() });
+    matches = await api({ action: 'getMatches' });
+    renderAdminList();
+    alert('แก้เวลาสำเร็จค่ะ ✅');
+  } catch(e) {
+    alert('แก้เวลาไม่สำเร็จ กรุณาลองใหม่ค่ะ');
+  }
+}
+
 async function adminEditTeams(id, currentHome, currentAway) {
   const newHome = prompt('ชื่อทีมเจ้าบ้าน:', currentHome);
   if (newHome === null) return;
@@ -660,6 +680,7 @@ function renderAdminList() {
         ${!hasResult && m.open ? `<button class="btn sm" onclick="adminToggle('${m.id}', false)">ปิดทาย</button>` : ''}
         ${!hasResult && !m.open ? `<button class="btn sm" onclick="adminToggle('${m.id}', true)">เปิดทาย</button>` : ''}
         <button class="btn sm" onclick="adminEditTeams('${m.id}','${m.home}','${m.away}')">✏️ แก้ชื่อทีม</button>
+        <button class="btn sm" onclick="adminEditDatetime('${m.id}','${m.datetime}')">🕐 แก้เวลา</button>
         ${!hasResult ? `<button class="btn sm primary" onclick="adminResult('${m.id}','${m.home}','${m.away}')">🏆 ใส่ผล</button>` : ''}
         <button class="btn sm danger" onclick="adminDelete('${m.id}')">ลบ</button>
       </div>
