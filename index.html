@@ -240,7 +240,7 @@ input:focus { border-color: #1a1a1a; }
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxUOI5WVUtB43lMMrtQRzGKTCwliIZB1mQbYZmv8aU6AJM8e-qR3K1_qeX_ck5pQwPq/exec";
+const API = "https://script.google.com/macros/s/AKfycbxbuIZAariqY4r9E0SXv6zodF6He9N_gWrzaBwdWrTauzThgAqYcy-3oHf-YoW9m1Pm/exec";
 const ADMIN = "admin";
 const ADMIN_PASSWORD = "987654321";
 
@@ -298,7 +298,13 @@ async function api(params) {
 }
 
 async function apiPost(data) {
-  return await api(data);
+  // แปลง array เป็น string ก่อนส่งค่ะ
+  const params = {};
+  Object.keys(data).forEach(k => {
+    if (Array.isArray(data[k])) params[k] = data[k].join(',');
+    else params[k] = data[k];
+  });
+  return await api(params);
 }
 
 async function doLogin() {
@@ -579,7 +585,7 @@ function renderPicks() {
 let top4Settings = { result: [], open: false };
 let myTop4Pick = { teams: [] };
 const TOP4_DEADLINE = new Date('2026-06-28T23:59:00+07:00');
-const GROUP_DEADLINE = new Date('2026-06-14T23:59:00+07:00');
+const GROUP_DEADLINE = new Date('2026-06-18T00:00:00+07:00');
 
 function renderCards() {
   const el = document.getElementById('tab-cards');
@@ -784,7 +790,7 @@ async function renderBonus() {
   // ===== ส่วนที่ 3: ทายที่ 1 กลุ่ม =====
   html += `<div class="card">
     <div style="font-size:15px;font-weight:500;margin-bottom:4px;">🥇 ทายที่ 1 ของแต่ละกลุ่ม</div>
-    <div style="font-size:12px;color:#888;margin-bottom:12px;">⏰ ทายได้ถึง ${groupDeadlineStr} น. (นัดแรกครบทุกกลุ่ม) • ถูกกลุ่มละ +5 แต้ม • 12 กลุ่ม</div>`;
+    <div style="font-size:12px;color:#888;margin-bottom:12px;">⏰ ทายได้ถึง ${groupDeadlineStr} น. (ก่อนนัดแรกของทุกกลุ่มเริ่ม) • ถูกกลุ่มละ +5 แต้ม • 12 กลุ่ม</div>`;
 
   Object.keys(GROUP_TEAMS).forEach(group => {
     const teams = GROUP_TEAMS[group];
@@ -1112,7 +1118,9 @@ let adminTop4Selected = [];
 async function adminTop4Toggle(open) {
   const err = document.getElementById('top4-admin-err');
   try {
-    await apiPost({ action: 'updateTop4Settings', open, result: adminTop4Selected });
+    const current = await api({ action: 'getTop4Settings' });
+    const currentResult = current && current.result ? current.result : [];
+    await apiPost({ action: 'updateTop4Settings', open, result: currentResult });
     alert(`${open ? 'เปิด' : 'ปิด'}ทาย Top 4 สำเร็จค่ะ ✅`);
   } catch(e) { err.style.display=''; err.textContent='ไม่สำเร็จค่ะ'; }
 }
