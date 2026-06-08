@@ -667,10 +667,19 @@ async function renderBonus() {
   const el = document.getElementById('tab-bonus');
   el.innerHTML = '<div class="spinner">⏳ กำลังโหลด...</div>';
 
-  // โหลดข้อมูลทั้งหมดพร้อมกันเลยค่ะ
+  const now = new Date();
+  const isChampOpen = now < CHAMPION_DEADLINE;
+  const FINAL_DEADLINE = new Date('2026-07-19T00:00:00+07:00');
+  const hasChangeCard = myCards.some(c => c.card_type === 'champion_change' && !c.used);
+  const canUseChangeCard = !isChampOpen && now < FINAL_DEADLINE && hasChangeCard;
+  const champDeadline = CHAMPION_DEADLINE.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const top4Deadline = TOP4_DEADLINE.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const isGroupDeadlinePassed = now > GROUP_DEADLINE;
+  const groupDeadlineStr = GROUP_DEADLINE.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  // โหลดทุกอย่างพร้อมกันค่ะ
   try {
-    const [champSettings, champPick, top4SettingsData, top4PickData, groupSettingsData, groupPicksData] = await Promise.all([
-      api({ action: 'getChampionLeaderboard' }),
+    const [champPick, top4SettingsData, top4PickData, groupSettingsData, groupPicksData] = await Promise.all([
       api({ action: 'getChampionPick', username: user }),
       api({ action: 'getTop4Settings' }),
       api({ action: 'getTop4Pick', username: user }),
@@ -686,15 +695,6 @@ async function renderBonus() {
     el.innerHTML = '<div class="empty">โหลดไม่สำเร็จ กรุณาลองใหม่</div>';
     return;
   }
-
-  const now = new Date();
-
-  // ===== ส่วนที่ 1: ทายแชมป์ =====
-  const isChampOpen = now < CHAMPION_DEADLINE;
-  const FINAL_DEADLINE = new Date('2026-07-19T00:00:00+07:00');
-  const hasChangeCard = myCards.some(c => c.card_type === 'champion_change' && !c.used);
-  const canUseChangeCard = !isChampOpen && now < FINAL_DEADLINE && hasChangeCard;
-  const champDeadline = CHAMPION_DEADLINE.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   let html = `<div class="card">
     <div style="font-size:15px;font-weight:500;margin-bottom:4px;">🏆 ทายแชมป์บอลโลก 2026</div>
@@ -727,10 +727,6 @@ async function renderBonus() {
 
   // ===== ส่วนที่ 2: ทาย Top 4 =====
   const isTop4Open = top4Settings.open && now < TOP4_DEADLINE;
-  const hasTop4Result = top4Settings.result && top4Settings.result.length > 0;
-  const myTeams = myTop4Pick.teams || [];
-  const correctCount = hasTop4Result ? myTeams.filter(t => top4Settings.result.includes(t)).length : 0;
-  const top4Deadline = TOP4_DEADLINE.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
   html += `<div class="card">
     <div style="font-size:15px;font-weight:500;margin-bottom:4px;">🏅 ทาย Top 4</div>
@@ -775,9 +771,6 @@ async function renderBonus() {
   html += `</div>`;
 
   // ===== ส่วนที่ 3: ทายที่ 1 กลุ่ม =====
-  const isGroupDeadlinePassed = now > GROUP_DEADLINE;
-  const groupDeadlineStr = GROUP_DEADLINE.toLocaleString('th-TH', { timeZone: 'Asia/Bangkok', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
   html += `<div class="card">
     <div style="font-size:15px;font-weight:500;margin-bottom:4px;">🥇 ทายที่ 1 ของแต่ละกลุ่ม</div>
     <div style="font-size:12px;color:#888;margin-bottom:12px;">⏰ ทายได้ถึง ${groupDeadlineStr} น. (นัดแรกครบทุกกลุ่ม) • ถูกกลุ่มละ +5 แต้ม • 12 กลุ่ม</div>`;
