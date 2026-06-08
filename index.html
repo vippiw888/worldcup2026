@@ -193,7 +193,7 @@ input:focus { border-color: #1a1a1a; }
         <option value="กานา">กานา</option><option value="กูราเซา">กูราเซา</option>
         <option value="เฮติ">เฮติ</option><option value="นิวซีแลนด์">นิวซีแลนด์</option>
       </select>
-      <button class="btn primary" onclick="adminSetChampion()">🏆 บันทึกผลแชมป์ (+5 แต้ม)</button>
+      <button class="btn primary" onclick="adminSetChampion()">🏆 บันทึกผลแชมป์ (+30 แต้ม)</button>
       <div id="champion-admin-err" class="err" style="display:none;"></div>
     </div>
     <div class="card">
@@ -210,21 +210,29 @@ input:focus { border-color: #1a1a1a; }
       <button class="btn primary" onclick="adminSaveTop4Result()">🏅 บันทึกผล Top 4</button>
       <div id="top4-admin-err" class="err" style="display:none;"></div>
     </div>
-      <div class="label">เลือกกลุ่ม</div>
-      <select id="admin-group-select" onchange="updateAdminGroupTeams()" style="margin-bottom:10px;">
-        <option value="">-- เลือกกลุ่ม --</option>
-        <option>Group A</option><option>Group B</option><option>Group C</option>
-        <option>Group D</option><option>Group E</option><option>Group F</option>
-        <option>Group G</option><option>Group H</option><option>Group I</option>
-        <option>Group J</option><option>Group K</option><option>Group L</option>
-      </select>
-      <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <button class="btn sm" onclick="adminGroupToggle(true)">เปิดทาย</button>
-        <button class="btn sm danger" onclick="adminGroupToggle(false)">ปิดทาย</button>
+    <div class="card">
+      <div style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">🥇 จัดการทายที่ 1 กลุ่ม</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn primary" onclick="adminGroupToggleAll(true)">✅ เปิดทายทุกกลุ่ม</button>
+        <button class="btn sm danger" onclick="adminGroupToggleAll(false)">❌ ปิดทายทุกกลุ่ม</button>
       </div>
-      <div class="label">บันทึกทีมที่ 1 ของกลุ่ม</div>
-      <select id="admin-group-winner" style="margin-bottom:10px;"><option value="">-- เลือกทีม --</option></select>
-      <button class="btn primary" onclick="adminSetGroupWinner()">🥇 บันทึกผลที่ 1</button>
+      <div style="border-top:1px solid #f0f0f0;padding-top:12px;">
+        <div class="label">เปิด/ปิดทีละกลุ่มค่ะ</div>
+        <select id="admin-group-select" onchange="updateAdminGroupTeams()" style="margin-bottom:10px;">
+          <option value="">-- เลือกกลุ่ม --</option>
+          <option>Group A</option><option>Group B</option><option>Group C</option>
+          <option>Group D</option><option>Group E</option><option>Group F</option>
+          <option>Group G</option><option>Group H</option><option>Group I</option>
+          <option>Group J</option><option>Group K</option><option>Group L</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-bottom:10px;">
+          <button class="btn sm" onclick="adminGroupToggle(true)">เปิดทาย</button>
+          <button class="btn sm danger" onclick="adminGroupToggle(false)">ปิดทาย</button>
+        </div>
+        <div class="label">บันทึกทีมที่ 1 ของกลุ่ม</div>
+        <select id="admin-group-winner" style="margin-bottom:10px;"><option value="">-- เลือกทีม --</option></select>
+        <button class="btn primary" onclick="adminSetGroupWinner()">🥇 บันทึกผลที่ 1</button>
+      </div>
       <div id="group-admin-err" class="err" style="display:none;"></div>
     </div>
     <div id="admin-list"></div>
@@ -232,7 +240,7 @@ input:focus { border-color: #1a1a1a; }
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbyGiLomWOjB1dq6qzDt6ZlU-gt8ZvMAjfHLqlsYwFrHgvntAUkteVuUIXuddnHG68kZ/exec";
+const API = "https://script.google.com/macros/s/AKfycbyQ9me7cB9DcRLAVhkWo5UVMJQNgnZBbEJtsqj7DF3-cW2_emGd1LMqM5YpYGm4qxQ/exec";
 const ADMIN = "admin";
 const ADMIN_PASSWORD = "987654321";
 
@@ -1159,6 +1167,18 @@ function updateAdminGroupTeams() {
       sel.innerHTML += `<option value="${t}">${t}</option>`;
     });
   }
+}
+
+async function adminGroupToggleAll(open) {
+  const groups = ['Group A','Group B','Group C','Group D','Group E','Group F',
+                  'Group G','Group H','Group I','Group J','Group K','Group L'];
+  const err = document.getElementById('group-admin-err');
+  if (!confirm(`${open ? 'เปิด' : 'ปิด'}ทายทุกกลุ่ม (12 กลุ่ม) ใช่ไหมคะ?`)) return;
+  err.style.display = 'none';
+  try {
+    await Promise.all(groups.map(group => apiPost({ action: 'updateGroupSetting', group, open })));
+    alert(`${open ? 'เปิด' : 'ปิด'}ทายทุกกลุ่มสำเร็จค่ะ ✅`);
+  } catch(e) { err.style.display=''; err.textContent='ไม่สำเร็จค่ะ กรุณาลองใหม่'; }
 }
 
 async function adminGroupToggle(open) {
