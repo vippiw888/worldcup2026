@@ -133,7 +133,7 @@ input:focus { border-color: #1a1a1a; }
     </div>
     <div class="card">
       <div style="font-size: 15px; font-weight: 600; margin-bottom: 8px;">Import โปรแกรมบอลโลก 2026</div>
-      <p style="font-size: 13px; color: #888; margin-bottom: 12px;">Import ทั้งหมด 104 แมตช์ทีเดียว ปิดทายไว้ก่อน ระบบเปิดอัตโนมัติ 48 ชั่วโมงก่อนแข่งค่ะ</p>
+      <p style="font-size: 13px; color: #888; margin-bottom: 12px;">Import ทั้งหมด 104 แมตช์ทีเดียว ปิดทายไว้ก่อน ระบบเปิดอัตโนมัติ 7 วันล่วงหน้า และปิด 2 ชั่วโมงก่อนแข่งค่ะ</p>
       <button class="btn primary" onclick="importAllMatches()" id="btn-import">⚽ Import 104 แมตช์</button>
       <div id="import-status" style="font-size: 13px; margin-top: 8px; display:none;"></div>
     </div>
@@ -153,14 +153,23 @@ input:focus { border-color: #1a1a1a; }
       <div id="admin-err" class="err" style="display:none;"></div>
     </div>
     <div class="card">
-      <div style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">🃏 เพิ่มการ์ดพลังให้สมาชิก</div>
+      <div style="font-size: 15px; font-weight: 600; margin-bottom: 12px;">🪙 จัดการ Coin</div>
+      <div class="label">Username</div>
+      <input type="text" id="coin-username" placeholder="ใส่ Username..." />
+      <div class="label">จำนวน Coin</div>
+      <input type="number" id="coin-amount" placeholder="เช่น 100" />
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="btn primary" onclick="adminAddCoin()">+ เพิ่ม Coin</button>
+        <button class="btn sm" onclick="adminSetCoin()">📝 ตั้งค่า Coin</button>
+      </div>
+      <div id="coin-admin-err" class="err" style="display:none;"></div>
+    </div>
       <div class="label">Username</div>
       <input type="text" id="card-username" placeholder="ใส่ Username..." />
       <div class="label">ประเภทการ์ด</div>
       <select id="card-type">
         <option value="double">⚡ Double (คะแนน x2)</option>
         <option value="triple">🔮 Triple (คะแนน x3)</option>
-        <option value="shield">🛡️ Shield (ป้องกันแพ้)</option>
         <option value="champion_change">🔄 Champion Change (เปลี่ยนทายแชมป์)</option>
       </select>
       <button class="btn primary" onclick="adminAddCard()">+ เพิ่มการ์ด</button>
@@ -243,7 +252,7 @@ input:focus { border-color: #1a1a1a; }
 </div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbzaopEzPCVM1hR2lQ7u1EP2Olr354lowTawLXVCg3wMyOwGEoRjfvajW1zvtNOADWgY/exec";
+const API = "https://script.google.com/macros/s/AKfycbxlg2SIjAl5U1NfDTB9Ci_-sTL-EirVM3OYAiCggOkJ4RSx2sOtSidcuaGtbraOCvFX/exec";
 const ADMIN = "admin";
 const ADMIN_PASSWORD = "987654321";
 
@@ -252,6 +261,7 @@ let displayName = null;
 let matches = [];
 let myPicks = {};
 let myCards = [];
+let myCoinBalance = 0;
 let championPick = null;
 let selTeam = null;
 let selCard = null;
@@ -399,16 +409,18 @@ function doLogout() {
 async function loadData() {
   document.getElementById('tab-matches').innerHTML = '<div class="spinner">⏳ กำลังโหลดข้อมูล...</div>';
   try {
-    const [m, p, c, ch] = await Promise.all([
+    const [m, p, c, ch, coin] = await Promise.all([
       api({ action: 'getMatches' }),
       api({ action: 'getPicks', user }),
       api({ action: 'getCards', username: user }),
-      api({ action: 'getChampionPick', username: user })
+      api({ action: 'getChampionPick', username: user }),
+      api({ action: 'getCoinBalance', username: user })
     ]);
     matches = m;
     myPicks = p;
     myCards = Array.isArray(c) ? c : [];
     championPick = ch && ch.team ? ch : null;
+    myCoinBalance = coin && coin.balance ? coin.balance : 0;
   } catch(e) {
     document.getElementById('tab-matches').innerHTML = '<div class="empty">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่</div>';
   }
@@ -536,6 +548,21 @@ async function savePick(matchId, home, away) {
   if (!selTeam) { err.style.display=''; err.textContent='กรุณาเลือกทีมก่อนค่ะ'; return; }
   const sh = parseInt(document.getElementById('sh').value) || 0;
   const sa = parseInt(document.getElementById('sa').value) || 0;
+
+  // Validate สกอร์ให้ตรงกับทีมที่ทายค่ะ
+  if (selTeam === home && sh <= sa) {
+    err.style.display=''; err.textContent=`ทาย ${home} ชนะ สกอร์ต้องเป็น ${home} > ${away} ค่ะ เช่น 1-0, 2-1`;
+    return;
+  }
+  if (selTeam === away && sa <= sh) {
+    err.style.display=''; err.textContent=`ทาย ${away} ชนะ สกอร์ต้องเป็น ${away} > ${home} ค่ะ เช่น 0-1, 1-2`;
+    return;
+  }
+  if (selTeam === 'เสมอ' && sh !== sa) {
+    err.style.display=''; err.textContent=`ทายเสมอ สกอร์ต้องเท่ากันค่ะ เช่น 0-0, 1-1, 2-2`;
+    return;
+  }
+
   btn.textContent = '⏳ กำลังบันทึก...'; btn.disabled = true;
   try {
     await apiPost({ action: 'savePick', match_id: matchId, user, team: selTeam, score_home: sh, score_away: sa });
@@ -592,12 +619,25 @@ const GROUP_DEADLINE = new Date('2026-06-18T00:00:00+07:00');
 
 function renderCards() {
   const el = document.getElementById('tab-cards');
+  const CARD_PRICES = { 'double': 50, 'shield': 75, 'triple': 100, 'champion_change': 150 };
   const cardInfo = {
     'double':   { icon: '⚡', name: 'Double', desc: 'คะแนนแมตช์นั้น x2', color: '#fff8e1', border: '#f9a825', text: '#e65100' },
     'triple':   { icon: '🔮', name: 'Triple', desc: 'คะแนนแมตช์นั้น x3', color: '#f3e5f5', border: '#8e24aa', text: '#6a1b9a' },
-    'shield':   { icon: '🛡️', name: 'Shield', desc: 'ทายผิดไม่เสียแต้ม', color: '#e8f5e9', border: '#388e3c', text: '#1b5e20' },
+
     'champion_change': { icon: '🔄', name: 'Champion Change', desc: 'เปลี่ยนทายแชมป์ได้ (29 มิ.ย. - 18 ก.ค.)', color: '#e3f2fd', border: '#1565c0', text: '#0d47a1' }
   };
+
+async function buyCard(cardType, price) {
+  if (!confirm(`ซื้อการ์ด ${cardType} ราคา ${price} 🪙 ใช่ไหมคะ?`)) return;
+  try {
+    const result = await apiPost({ action: 'buyCoin', username: user, card_type: cardType });
+    if (!result.success) { alert(result.message || 'ซื้อไม่สำเร็จค่ะ'); return; }
+    myCoinBalance = result.balance;
+    myCards = await api({ action: 'getCards', username: user });
+    renderCards();
+    alert(`ซื้อการ์ดสำเร็จค่ะ! เหลือ ${result.balance} 🪙`);
+  } catch(e) { alert('เกิดข้อผิดพลาด กรุณาลองใหม่ค่ะ'); }
+}
 
   const available = myCards.filter(c => !c.used);
   const used = myCards.filter(c => c.used);
@@ -896,7 +936,6 @@ function getCardLabel(type) {
   const labels = { 
     'double': '⚡ Double (x2)', 
     'triple': '🔮 Triple (x3)', 
-    'shield': '🛡️ Shield (ป้องกัน)',
     'champion_change': '🔄 Champion Change'
   };
   return labels[type] || type;
@@ -919,7 +958,7 @@ async function renderLeaderboard() {
 }
 
 async function importAllMatches() {
-  if (!confirm('Import โปรแกรมบอลโลก 2026 ทั้งหมด 104 แมตช์?\nแมตช์จะปิดทายไว้ก่อน ระบบเปิดอัตโนมัติ 48 ชั่วโมงก่อนแข่งค่ะ')) return;
+  if (!confirm('Import โปรแกรมบอลโลก 2026 ทั้งหมด 104 แมตช์?\nแมตช์จะปิดทายไว้ก่อน ระบบเปิดอัตโนมัติ 7 วันล่วงหน้า และปิด 2 ชั่วโมงก่อนแข่งค่ะ')) return;
   const btn = document.getElementById('btn-import');
   const status = document.getElementById('import-status');
   btn.disabled = true; btn.textContent = 'กำลัง Import...';
@@ -1121,6 +1160,33 @@ async function adminDelete(id) {
   await apiPost({ action: 'deleteMatch', id });
   matches = await api({ action: 'getMatches' });
   renderAdminList();
+}
+
+async function adminAddCoin() {
+  const username = document.getElementById('coin-username').value.trim();
+  const amount = parseInt(document.getElementById('coin-amount').value);
+  const err = document.getElementById('coin-admin-err');
+  if (!username || !amount) { err.style.display=''; err.textContent='กรุณากรอกข้อมูลให้ครบค่ะ'; return; }
+  err.style.display = 'none';
+  try {
+    const result = await apiPost({ action: 'addCoin', username, amount });
+    if (result.success) alert(`เพิ่ม ${amount} 🪙 ให้ ${username} สำเร็จค่ะ! ยอดรวม: ${result.balance} 🪙`);
+    else alert('ไม่สำเร็จค่ะ');
+  } catch(e) { err.style.display=''; err.textContent='เกิดข้อผิดพลาดค่ะ'; }
+}
+
+async function adminSetCoin() {
+  const username = document.getElementById('coin-username').value.trim();
+  const amount = parseInt(document.getElementById('coin-amount').value);
+  const err = document.getElementById('coin-admin-err');
+  if (!username || isNaN(amount)) { err.style.display=''; err.textContent='กรุณากรอกข้อมูลให้ครบค่ะ'; return; }
+  if (!confirm(`ตั้ง Coin ของ ${username} เป็น ${amount} 🪙 ใช่ไหมคะ?`)) return;
+  err.style.display = 'none';
+  try {
+    const result = await apiPost({ action: 'setCoin', username, amount });
+    if (result.success) alert(`ตั้ง Coin ของ ${username} เป็น ${amount} 🪙 สำเร็จค่ะ!`);
+    else alert('ไม่สำเร็จค่ะ');
+  } catch(e) { err.style.display=''; err.textContent='เกิดข้อผิดพลาดค่ะ'; }
 }
 
 async function adminAddCard() {
