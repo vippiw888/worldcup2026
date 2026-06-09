@@ -787,7 +787,7 @@ async function renderBonus() {
 
   let html = `<div class="card">
     <div style="font-size:15px;font-weight:500;margin-bottom:4px;">🏆 ทายแชมป์บอลโลก 2026</div>
-    <div style="font-size:12px;color:#888;margin-bottom:10px;">⏰ ทายได้ถึง ${champDeadline} น. (วันสุดท้ายรอบแบ่งกลุ่ม) • ถูก +30 แต้ม</div>`;
+    <div style="font-size:12px;color:#888;margin-bottom:10px;">⏰ ทายได้ถึง ${champDeadline} น. (หลังจบรอบแบ่งกลุ่ม) • ถูก +30 แต้ม</div>`;
 
   if (championPick) {
     html += `<div style="background:#e8f5e9;border-radius:8px;padding:10px;text-align:center;margin-bottom:10px;">
@@ -865,7 +865,7 @@ async function renderBonus() {
   // ===== ส่วนที่ 3: ทายที่ 1 กลุ่ม =====
   html += `<div class="card">
     <div style="font-size:15px;font-weight:500;margin-bottom:4px;">🥇 ทายที่ 1 ของแต่ละกลุ่ม</div>
-    <div style="font-size:12px;color:#888;margin-bottom:12px;">⏰ ทายได้ถึง ${groupDeadlineStr} น. (ก่อนนัดแรกของทุกกลุ่มเริ่ม) • ถูกกลุ่มละ +5 แต้ม • 12 กลุ่ม</div>`;
+    <div style="font-size:12px;color:#888;margin-bottom:12px;">⏰ ทายได้ถึง ${groupDeadlineStr} น. (หลังจบนัดแรกของทุกกลุ่ม) • ถูกกลุ่มละ +5 แต้ม • 12 กลุ่ม</div>`;
 
   Object.keys(GROUP_TEAMS).forEach(group => {
     const teams = GROUP_TEAMS[group];
