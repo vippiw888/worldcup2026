@@ -480,12 +480,26 @@ function openPredict(matchId) {
   const p = myPicks[matchId];
   const odds = m.odds || { home: 1.5, away: 2.0, draw: 2.5 };
   const availableCards = getAvailableCards();
-  const cardHTML = availableCards.length ? `
-    <div class="label" style="margin-bottom:8px;font-size:13px;">🃏 การ์ดพลังพิเศษ (มี ${availableCards.length} ใบ)</div>
+  const cardUsedOnThisMatch = myCards.find(c => c.used && c.match_id === matchId);
+
+  // รวมการ์ดที่ใช้กับแมตช์นี้เข้ามาด้วยค่ะ
+  const cardTypes = [...new Set(availableCards.map(c => c.card_type))];
+  if (cardUsedOnThisMatch && !cardTypes.includes(cardUsedOnThisMatch.card_type)) {
+    cardTypes.push(cardUsedOnThisMatch.card_type);
+  }
+
+  const cardHTML = (cardTypes.length > 0) ? `
+    <div class="label" style="margin-bottom:8px;font-size:13px;">🃏 การ์ดพลังพิเศษ</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
       <button class="btn sm primary" id="card-none" onclick="selectCard(null)">ไม่ใช้การ์ด</button>
-      ${[...new Set(availableCards.map(c => c.card_type))].map(type => `<button class="btn sm" id="card-${type}" onclick="selectCard('${type}')">${getCardLabel(type)}</button>`).join('')}
+      ${cardTypes.map(type => {
+        const isUsedHere = cardUsedOnThisMatch && cardUsedOnThisMatch.card_type === type;
+        return `<button class="btn sm ${isUsedHere ? 'primary' : ''}" id="card-${type}" onclick="selectCard('${type}')">${getCardLabel(type)}${isUsedHere ? ' ✓' : ''}</button>`;
+      }).join('')}
     </div>` : '';
+
+  // ถ้ามีการ์ดที่ใช้กับแมตช์นี้อยู่ ให้ set selCard เป็นการ์ดนั้นค่ะ
+  if (cardUsedOnThisMatch) selCard = cardUsedOnThisMatch.card_type;
   document.getElementById('predict-title').textContent = m.home + ' vs ' + m.away;
   document.getElementById('predict-content').innerHTML = `
     <div class="card">
@@ -682,7 +696,10 @@ async function buyCard(cardType, price) {
       html += `<div style="font-size:12px;color:#888;font-weight:500;margin-top:12px;margin-bottom:8px;">📭 ใช้แล้ว (${used.length} ใบ)</div>`;
       used.forEach(c => {
         const info = cardInfo[c.card_type] || { icon: '🎴', name: c.card_type, desc: '' };
-        const matchName = c.match_id === 'champion' ? 'ทายแชมป์' : c.match_id ? `แมตช์ ${c.match_id.replace('match_','')}` : '';
+        const matchName = c.match_id === 'champion' ? 'ทายแชมป์' : c.match_id ? (() => {
+          const m = matches.find(x => x.id === c.match_id);
+          return m ? `${m.home} vs ${m.away}` : c.match_id;
+        })() : '';
         html += `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid #e0e0e0;background:#fafafa;margin-bottom:6px;opacity:0.7;">
           <div style="font-size:22px;filter:grayscale(1);">${info.icon}</div>
           <div style="flex:1;">
