@@ -445,12 +445,14 @@ function renderMatches() {
   const displayMatches = groupMatches.length ? groupMatches : matches;
   el.innerHTML = displayMatches.map(m => {
     const p = myPicks[m.id];
+    const usedCard = myCards.find(c => c.used && c.match_id === m.id);
+    const cardLabel = usedCard ? ` ${getCardLabel(usedCard.card_type).split(' ')[0]}` : '';
     const hasResult = m.result_home !== "" && m.result_home !== null && m.result_home !== undefined;
     const statusBadge = hasResult
       ? `<span class="badge badge-done">จบแล้ว • ${m.result_home}-${m.result_away}</span>`
       : m.open ? `<span class="badge badge-open">เปิดทาย</span>`
       : `<span class="badge badge-closed">ปิดทาย</span>`;
-    const pickInfo = p ? `<div class="match-pick">ทายไว้: ${p.team} (${p.score_home}-${p.score_away})</div>` : '';
+    const pickInfo = p ? `<div class="match-pick">ทายไว้: ${p.team} (${p.score_home}-${p.score_away})${cardLabel}</div>` : '';
     const canPick = m.open && !hasResult;
     const dateDisplay = m.datetime ? formatThaiDate(m.datetime) : m.date;
     return `<div class="card">
@@ -565,6 +567,12 @@ async function savePick(matchId, home, away) {
 
   btn.textContent = '⏳ กำลังบันทึก...'; btn.disabled = true;
   try {
+    // คืนการ์ดเก่าก่อนถ้ามีค่ะ
+    const oldCard = myCards.find(c => c.used && c.match_id === matchId);
+    if (oldCard) {
+      await apiPost({ action: 'returnCard', username: user, match_id: matchId });
+      myCards = await api({ action: 'getCards', username: user });
+    }
     await apiPost({ action: 'savePick', match_id: matchId, user, team: selTeam, score_home: sh, score_away: sa });
     if (selCard) {
       await apiPost({ action: 'useCard', username: user, card_type: selCard, match_id: matchId });
